@@ -37,18 +37,18 @@ fi
 echo -e ${WHITE}"About to create folders"$(tput sgr0)
 
 cd /home/pi
-mkdir capture
-chmod 777 /home/pi/capture
-mkdir build-motion-mmal
-chmod 777 /home/pi/build-motion-mmal
+mkdir -v capture
+chmod -v 777 /home/pi/capture
+mkdir -v build-motion-mmal
+chmod -v 777 /home/pi/build-motion-mmal
 
 cd /home/pi/build-motion-mmal
-rm -rf userland
-mkdir userland
-chmod 777 /home/pi/build-motion-mmal/userland
-rm -rf motion
-mkdir motion
-chmod 777 /home/pi/build-motion-mmal/motion
+rm -rf -v userland
+mkdir -v userland
+chmod -v 777 /home/pi/build-motion-mmal/userland
+rm -rf -v motion
+mkdir -v motion
+chmod -v 777 /home/pi/build-motion-mmal/motion
 
 echo -e ${WHITE}"About to install the ${PURPLE}normal motion${WHITE} so as to use it's ${RED}daemon${WHITE} startup"$(tput sgr0)
 apt-get install -y motion
@@ -88,23 +88,25 @@ make
 
 echo -e ${WHITE}"Copying the newly built executable to target folder"$(tput sgr0)
 cp ./motion /usr/bin/motion
-chmod 777 /usr/bin/motion
+chmod -v 777 /usr/bin/motion
 
 echo -e ${WHITE}"Setting folder persmissions"$(tput sgr0)
-chmod 777 /etc/motion/motion.conf
-chmod 777 /etc/motion.conf
-chmod 777 /usr/bin/motion
+chmod -v 777 /etc/motion/motion.conf
+chmod -v 777 /etc/motion.conf
+chmod -v 777 /usr/bin/motion
 touch /home/pi/capture/motion.log
-chmod 777 /home/pi/capture/motion.log
+chmod -v 777 /home/pi/capture/motion.log
 
 #Use Sed
 #Add how to change to auto start
 #sudo nano /etc/default/motion
 #start_motion_daemon=yes
 sed -i 's|start_motion_daemon=no|start_motion_daemon=yes|g' /etc/default/motion
+grep -C 2 "start_motion_daemon=" /etc/default/motion
 #sudo nano /etc/motion.conf
 #daemon on
 sed -i 's|daemon off|daemon on|g' /etc/motion.conf
+grep -C 2 "daemon o" /etc/motion.conf
 
 set +x
 echo -e ${WHITE}""$(tput sgr0)
