@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ASK_TO_REBOOT=0
+
 #Functions
 function ScreenLines {
   printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
@@ -16,6 +18,88 @@ calc_wt_size() {
     WT_WIDTH=120
   fi
   WT_MENU_HEIGHT=$(($WT_HEIGHT-8))
+}
+
+do_expand_rootfs() {
+  if ! [ -h /dev/root ]; then
+    whiptail --msgbox "/dev/root does not exist or is not a symlink. Don't know how to expand" 20 60 2
+    return 0
+  fi
+
+  ROOT_PART=$(readlink /dev/root)
+  PART_NUM=${ROOT_PART#mmcblk0p}
+  if [ "$PART_NUM" = "$ROOT_PART" ]; then
+    whiptail --msgbox "/dev/root is not an SD card. Don't know how to expand" 20 60 2
+    return 0
+  fi
+
+  # NOTE: the NOOBS partition layout confuses parted. For now, let's only 
+  # agree to work with a sufficiently simple partition layout
+  if [ "$PART_NUM" -ne 2 ]; then
+    whiptail --msgbox "Your partition layout is not currently supported by this tool. You are probably using NOOBS, in which case your root filesystem is already expanded anyway." 20 60 2
+    return 0
+  fi
+
+  LAST_PART_NUM=$(parted /dev/mmcblk0 -ms unit s p | tail -n 1 | cut -f 1 -d:)
+
+  if [ "$LAST_PART_NUM" != "$PART_NUM" ]; then
+    whiptail --msgbox "/dev/root is not the last partition. Don't know how to expand" 20 60 2
+    return 0
+  fi
+
+  # Get the starting offset of the root partition
+  PART_START=$(parted /dev/mmcblk0 -ms unit s p | grep "^${PART_NUM}" | cut -f 2 -d:)
+  [ "$PART_START" ] || return 1
+  # Return value will likely be error for fdisk as it fails to reload the
+  # partition table because the root fs is mounted
+  fdisk /dev/mmcblk0 <<EOF
+p
+d
+$PART_NUM
+n
+p
+$PART_NUM
+$PART_START
+
+p
+w
+EOF
+  ASK_TO_REBOOT=1
+
+  # now set up an init.d script
+cat <<\EOF > /etc/init.d/resize2fs_once &&
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          resize2fs_once
+# Required-Start:
+# Required-Stop:
+# Default-Start: 2 3 4 5 S
+# Default-Stop:
+# Short-Description: Resize the root filesystem to fill partition
+# Description:
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+    log_daemon_msg "Starting resize2fs_once" &&
+    resize2fs /dev/root &&
+    rm /etc/init.d/resize2fs_once &&
+    update-rc.d resize2fs_once remove &&
+    log_end_msg $?
+    ;;
+  *)
+    echo "Usage: $0 start" >&2
+    exit 3
+    ;;
+esac
+EOF
+  chmod +x /etc/init.d/resize2fs_once &&
+  update-rc.d resize2fs_once defaults &&
+  if [ "$INTERACTIVE" = True ]; then
+    whiptail --msgbox "Root partition has been resized.\nThe filesystem will be enlarged upon the next reboot" 20 60 2
+  fi
 }
 
 set_config_var() {
@@ -55,8 +139,72 @@ end
 EOF
 }
 
+do_change_locale() {
+#  dpkg-reconfigure locales
+  #Check where we are at now
+  locale
+  #Use sed to comment en_GB.UTF-8 UTF-8 and uncomment en_NZ.UTF-8 UTF-8
+  sudo sed -i 's|en_GB.UTF-8 UTF-8|\# en_GB.UTF-8 UTF-8|g' /etc/locale.gen
+  sudo sed -i 's|\# en_NZ.UTF-8 UTF-8|en_NZ.UTF-8 UTF-8|g' /etc/locale.gen
+  #Generate the locales
+  sudo locale-gen
+  #Check the available locales
+  locale -a
+  #Check what has been set
+  locale
+  #Update locale
+  sudo update-locale LANG=en_NZ.UTF-8
+  dpkg-reconfigure keyboard-configuration
+}
+
+do_change_timezone() {
+#  dpkg-reconfigure tzdata
+  echo "Pacific/Auckland" > /etc/timezone
+  dpkg-reconfigure -f noninteractive tzdata
+}
+
+do_change_location() {
+  do_change_locale
+  do_change_timezone
+  
+  ASK_TO_REBOOT=1
+}
+
+do_memory_split() {
+  set_config_var gpu_mem "16" /boot/config.txt
+}
+
 do_finish() {
+  disable_raspi_config_at_boot
+  if [ $ASK_TO_REBOOT -eq 1 ]; then
+    whiptail --yesno "Would you like to reboot now?" 20 60 2
+    if [ $? -eq 0 ]; then # yes
+      sync
+      reboot
+    fi
+  fi
   exit 0
+}
+
+do_setup_pi() {
+  #Expand Filesystem
+  do_expand_rootfs
+  #set language and timezone
+  do_change_location
+  #Memory
+  do_memory_split
+  #setupNetworking
+  #./setupNetworking.sh
+  #motd
+  #./motd.sh
+  #monit
+  #./InstallMonit.sh
+  #Remove the unused wolfram-engine and minecraft-pi
+  apt-get purge -y wolfram-engine minecraft-pi openbox lightdm fonts-roboto liblightdm-gobject-1-0 libxklavier16 lightdm-gtk-greeter
+  
+  ASK_TO_REBOOT=1
+  
+  #whiptail --msgbox "Not available yet..." 20 60 1
 }
 
 do_change_hostname() {
@@ -195,30 +343,32 @@ fi
 calc_wt_size
 while true; do
   FUN=$(whiptail --title "Raspberry Pi - Olympus Configuration/Installation Tool (piconf)" --menu "Configuration/Installation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-    "1 Rename Pi" "Rename this Pi" \
-    "2 Change User Password" "Change password for the default user (pi)" \
-    "3 Setup MOTD" "Customises the MOTD for this Pi" \
-    "4 Install AirPi" "AirPi allows this Pi to act as an iTunes endpoint" \
-    "5 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-    "6 Install Motion" "Motion turns this Pi into a capable security camera" \
-    "7 Setup Networking" "Configure the network on this Pi for the Olympus Domain" \
-    "8 Update Pi" "Update this Pi's packages" \
-    "9 About piconf" "Information about this configuration tool" \
+    "01 Setup Pi" "Install all of the default packages on this Pi" \
+    "02 Rename Pi" "Rename this Pi" \
+    "03 Change User Password" "Change password for the default user (pi)" \
+    "04 Setup MOTD" "Customises the MOTD for this Pi" \
+    "05 Install AirPi" "AirPi allows this Pi to act as an iTunes endpoint" \
+    "06 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+    "07 Install Motion" "Motion turns this Pi into a capable security camera" \
+    "08 Setup Networking" "Configure the network on this Pi for the Olympus Domain" \
+    "09 Update Pi" "Update this Pi's packages" \
+    "10 About piconf" "Information about this configuration tool" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
     do_finish
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      1\ *) do_change_hostname ;;
-      2\ *) do_change_pass ;;
-      3\ *) do_setup_motd ;;
-      4\ *) do_install_airpi ;;
-      5\ *) do_camera ;;
-      6\ *) do_install_motion ;;
-      7\ *) do_setup_network ;;
-      8\ *) do_update ;;
-      9\ *) do_about ;;
+      01\ *) do_setup_pi ;;
+      02\ *) do_change_hostname ;;
+      03\ *) do_change_pass ;;
+      04\ *) do_setup_motd ;;
+      05\ *) do_install_airpi ;;
+      06\ *) do_camera ;;
+      07\ *) do_install_motion ;;
+      08\ *) do_setup_network ;;
+      09\ *) do_update ;;
+      10\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   else
