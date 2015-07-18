@@ -144,16 +144,16 @@ do_change_locale() {
   #Check where we are at now
   locale
   #Use sed to comment en_GB.UTF-8 UTF-8 and uncomment en_NZ.UTF-8 UTF-8
-  sudo sed -i 's|en_GB.UTF-8 UTF-8|\# en_GB.UTF-8 UTF-8|g' /etc/locale.gen
-  sudo sed -i 's|\# en_NZ.UTF-8 UTF-8|en_NZ.UTF-8 UTF-8|g' /etc/locale.gen
+  sed -i 's|en_GB.UTF-8 UTF-8|\# en_GB.UTF-8 UTF-8|g' /etc/locale.gen
+  sed -i 's|\# en_NZ.UTF-8 UTF-8|en_NZ.UTF-8 UTF-8|g' /etc/locale.gen
   #Generate the locales
-  sudo locale-gen
+  locale-gen
   #Check the available locales
   locale -a
   #Check what has been set
   locale
   #Update locale
-  sudo update-locale LANG=en_NZ.UTF-8
+  update-locale LANG=en_NZ.UTF-8
   dpkg-reconfigure keyboard-configuration
 }
 
@@ -166,8 +166,6 @@ do_change_timezone() {
 do_change_location() {
   do_change_locale
   do_change_timezone
-  
-  ASK_TO_REBOOT=1
 }
 
 do_memory_split() {
@@ -187,24 +185,25 @@ do_finish() {
 }
 
 do_setup_pi() {
-  #Expand Filesystem
+  # Rename the Pi, needs to be done FIRST!!!!
+  do_change_hostname
+  # Expand the Filesystem to the full SD card
   do_expand_rootfs
-  #set language and timezone
+  # set language and timezone
   do_change_location
-  #Memory
+  # Set the Memory split
   do_memory_split
-  #setupNetworking
-  #./setupNetworking.sh
-  #motd
-  #./motd.sh
-  #monit
-  #./InstallMonit.sh
+  # Setup Domain Networking
+  ./setupNetworking.sh
+  # Set the motd to the Domain default
+  ./motd.sh
+  # Install monit to allow network monitoring of the Pi
+  ./InstallMonit.sh
   #Remove the unused wolfram-engine and minecraft-pi
-  apt-get purge -y wolfram-engine minecraft-pi openbox lightdm fonts-roboto liblightdm-gobject-1-0 libxklavier16 lightdm-gtk-greeter
+  apt-get purge -y wolfram-engine minecraft-pi
+  apt-get autoremove -y
   
   ASK_TO_REBOOT=1
-  
-  #whiptail --msgbox "Not available yet..." 20 60 1
 }
 
 do_change_hostname() {
@@ -238,14 +237,6 @@ do_change_pass() {
   whiptail --msgbox "Password changed successfully" 20 60 1
 }
 
-do_setup_motd() {
-  whiptail --msgbox "Not available yet..." 20 60 1
-}
-
-do_install_airpi() {
-  whiptail --msgbox "Not available yet..." 20 60 1
-}
-
 # $1 is 0 to disable camera, 1 to enable it
 set_camera() {
   # Stop if /boot is not a mountpoint
@@ -271,6 +262,16 @@ set_camera() {
   fi
 }
 
+disable_raspi_config_at_boot() {
+  if [ -e /etc/profile.d/raspi-config.sh ]; then
+    rm -f /etc/profile.d/raspi-config.sh
+    sed -i /etc/inittab \
+      -e "s/^#\(.*\)#\s*RPICFG_TO_ENABLE\s*/\1/" \
+      -e "/#\s*RPICFG_TO_DISABLE/d"
+    telinit q
+  fi
+}
+
 do_camera() {
   if [ ! -e /boot/start_x.elf ]; then
     whiptail --msgbox "Your firmware appears to be out of date (no start_x.elf). Please update" 20 60 2
@@ -287,16 +288,20 @@ do_camera() {
   fi
 }
 
-do_install_motion() {
-  whiptail --msgbox "Not available yet..." 20 60 1
+# Custom Installers
+do_install_airpi() {
+  ./InstallAirPi.sh
+  whiptail --msgbox "AirPi Installation Complete!" 20 60 1
 }
 
-do_setup_network() {
-  whiptail --msgbox "Not available yet..." 20 60 1
+do_install_motion() {
+  ./InstallMotion.sh
+  whiptail --msgbox "motion Installation Complete!" 20 60 1
 }
 
 do_update() {
-  whiptail --msgbox "Not available yet..." 20 60 1
+  ./updatePi.sh
+  whiptail --msgbox "Pi Updated!" 20 60 1
 }
 
 do_about() {
@@ -340,19 +345,17 @@ fi
 #echo -e ${WHITE}""$(tput sgr0)
 
 #Add Install of SendEmail, maybe bundle all the base packages into one single install option "Install ..."
+#Also add: usbmount, ntfs-3g, samba
 calc_wt_size
 while true; do
   FUN=$(whiptail --title "Raspberry Pi - Olympus Configuration/Installation Tool (piconf)" --menu "Configuration/Installation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
     "01 Setup Pi" "Install all of the default packages on this Pi" \
-    "02 Rename Pi" "Rename this Pi" \
-    "03 Change User Password" "Change password for the default user (pi)" \
-    "04 Setup MOTD" "Customises the MOTD for this Pi" \
-    "05 Install AirPi" "AirPi allows this Pi to act as an iTunes endpoint" \
-    "06 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-    "07 Install Motion" "Motion turns this Pi into a capable security camera" \
-    "08 Setup Networking" "Configure the network on this Pi for the Olympus Domain" \
-    "09 Update Pi" "Update this Pi's packages" \
-    "10 About piconf" "Information about this configuration tool" \
+    "02 Change User Password" "Change password for the default user (pi)" \
+    "03 Install AirPi" "AirPi allows this Pi to act as an iTunes endpoint" \
+    "04 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+    "05 Install Motion" "Motion turns this Pi into a capable security camera" \
+    "06 Update Pi" "Update this Pi's packages" \
+    "07 About piconf" "Information about this configuration tool" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -360,15 +363,12 @@ while true; do
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       01\ *) do_setup_pi ;;
-      02\ *) do_change_hostname ;;
-      03\ *) do_change_pass ;;
-      04\ *) do_setup_motd ;;
-      05\ *) do_install_airpi ;;
-      06\ *) do_camera ;;
-      07\ *) do_install_motion ;;
-      08\ *) do_setup_network ;;
-      09\ *) do_update ;;
-      10\ *) do_about ;;
+      02\ *) do_change_pass ;;
+      03\ *) do_install_airpi ;;
+      04\ *) do_camera ;;
+      05\ *) do_install_motion ;;
+      06\ *) do_update ;;
+      07\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   else
