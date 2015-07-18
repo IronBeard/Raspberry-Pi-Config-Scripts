@@ -37,25 +37,34 @@ fi
 echo -e ${WHITE}"Install ${PURPLE}monit 5.4 ${WHITE}from repo"$(tput sgr0)
 sudo apt-get install -y monit
 
-echo -e ${WHITE}"Create folder for ${PURPLE}monit 5.11"$(tput sgr0)
+echo -e ${WHITE}"Create folder for ${PURPLE}monit"$(tput sgr0)
 mkdir -v ~/monit
 cd ~/monit
 
-echo -e ${WHITE}"Get ${PURPLE}monit 5.11 ${WHITE}from ${RED}http://mmonit.com/monit"$(tput sgr0)
-wget http://mmonit.com/monit/dist/binary/5.11/monit-5.11-linux-arm.tar.gz
+echo -e ${WHITE}"Get ${PURPLE}monit ${WHITE}from ${RED}http://mmonit.com/monit"$(tput sgr0)
+#wget http://mmonit.com/monit/dist/binary/5.11/monit-5.11-linux-arm.tar.gz
+#wget https://mmonit.com/monit/dist/binary/5.14/monit-5.14-linux-arm.tar.gz
+wget http://mmonit.com/monit/dist/monit-5.11.tar.gz
 
-echo -e ${WHITE}"Unpack ${PURPLE}monit 5.11 ${WHITE}from the downloaded tar"$(tput sgr0)
-tar zxvf monit-5.11-linux-arm.tar.gz
+echo -e ${WHITE}"Unpack ${PURPLE}monit ${WHITE}from the downloaded tar"$(tput sgr0)
+#tar zxvf monit-5.11-linux-arm.tar.gz
+tar zxvf monit-5.11.tar.gz
 
-echo -e ${WHITE}"Copy ${PURPLE}monit 5.11 ${WHITE}over the installed ${PURPLE}monit 5.4"$(tput sgr0)
-sudo cp -f -v ~/monit/monit-5.11/bin/monit /usr/bin/monit
+echo -e ${WHITE}"Build ${PURPLE}monit ${WHITE}from the downloaded source"$(tput sgr0)
+cd monit-5.11/
+./configure --without-pam
+make
+make install
 
-echo -e ${WHITE}"Deleting downloaded ${PURPLE}monit 5.11 ${WHITE}"$(tput sgr0)
-cd ..
-rm -r -v ~/monit/
+echo -e ${WHITE}"Copy ${PURPLE}monit ${WHITE}over the installed ${PURPLE}monit 5.4"$(tput sgr0)
+sudo cp -f -v ~/monit/monit-5.11/monit /usr/bin/monit
 
 echo -e ${WHITE}"Move the${LIGHTBLUE} monitrc ${WHITE}config file to monits default location"$(tput sgr0)
 sudo mv -v /etc/monit/monitrc /etc/monitrc
+
+echo -e ${WHITE}"Deleting downloaded ${PURPLE}monit${WHITE}"$(tput sgr0)
+#cd ..
+#rm -r -v ~/monit/
 
 echo -e ${WHITE}"Using to SED edit the service script and change the ${LIGHTBLUE}monitrc ${WHITE}path from:"$(tput sgr0)
 echo -e ${WHITE}'CONFIG="/etc/monit/monitrc"'$(tput sgr0)
@@ -111,12 +120,12 @@ echo '##########################################################################
        stop program "/sbin/ifdown wlan0 --force" with timeout 60 seconds
        if failed link then restart
 #
-#Test AirPi - Monitors the shairport task scheduling service
+#Test AirPi - Monitors the shairport service
 #  check process shairport with pidfile /var/run/shairport.pid
 #       start program "/etc/init.d/shairport start" with timeout 60 seconds
 #       stop program "/etc/init.d/shairport stop" with timeout 60 seconds
 #
-#Test Motion - Monitors the motion task scheduling service
+#Test Motion - Monitors the motion service
 #  check process motion with pidfile /home/pi/capture/motion.pid
 #       start program "/etc/init.d/motion start" with timeout 60 seconds
 #       stop program "/etc/init.d/motion stop" with timeout 60 seconds

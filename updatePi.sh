@@ -67,5 +67,8 @@ else
   echo -e ${GREEN}"firmware${WHITE} flag not present, not updating the Pi firmware"$(tput sgr0)
   echo -e ${WHITE}"usage:"$(tput sgr0)
   echo -e ${WHITE}"sudo $0 ${GREEN}firmware${LIGHTPURPLE} Or${WHITE} sudo $0"$(tput sgr0)
-  exit
 fi
+
+echo -e ${WHITE}"FREE SPACE"$(tput sgr0)
+echo -e ${YELLOW}"df -hT /"$(tput sgr0)
+df -hT /
