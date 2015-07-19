@@ -199,9 +199,11 @@ do_setup_pi() {
   ./motd.sh
   # Install monit to allow network monitoring of the Pi
   ./InstallMonit.sh
-  #Remove the unused wolfram-engine and minecraft-pi
+  # Remove the unused wolfram-engine and minecraft-pi
   apt-get purge -y wolfram-engine minecraft-pi
   apt-get autoremove -y
+  # Disable the raspi_config reminder
+  disable_raspi_config_at_boot
   
   ASK_TO_REBOOT=1
 }
@@ -295,6 +297,7 @@ do_install_airpi() {
 }
 
 do_install_motion() {
+  do_camera
   ./InstallMotion.sh
   whiptail --msgbox "motion Installation Complete!" 20 60 1
 }
@@ -306,10 +309,18 @@ do_update() {
 
 do_about() {
   whiptail --msgbox "\
-This tool provides a straight-forward way of doing initial
-configuration of the Raspberry Pi. Although it can be run
-at any time, some of the options may have difficulties if
-you have heavily customised your installation.\
+This tool is a customised version of the raspi-config
+designed to set the Pi up for use on the Olumpus Domain.
+The setup option does the following:
+Renames the Pi
+Expand the Filesystem to the full SD card
+Sets the language and timezone to NZ
+Sets the Memory split to 16
+Sets up the Domain Networking including wireless
+Sets the motd to the Domain default
+Installs monit to allow network monitoring of the Pi
+Removes the unused wolfram-engine and minecraft-pi
+and finally disables the raspi_config reminder\
 " 20 70 1
 }
 
