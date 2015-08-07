@@ -34,6 +34,9 @@ if [ `whoami` != root ]; then
   exit
 fi
 
+echo -e ${WHITE}"Install ${PURPLE}monit 5.11 ${WHITE} build prerequisites"$(tput sgr0)
+sudo apt-get -y install libssl-dev
+
 echo -e ${WHITE}"Install ${PURPLE}monit 5.4 ${WHITE}from repo"$(tput sgr0)
 sudo apt-get install -y monit
 
