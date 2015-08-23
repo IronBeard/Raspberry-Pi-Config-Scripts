@@ -1,0 +1,317 @@
+#!/usr/bin/python
+
+# import libraries needed
+from suds.client import *
+import sys
+import subprocess
+import socket
+import fcntl
+import struct
+
+#
+# Need to:
+# add more error handling
+# reorder methods to match variable list
+# interate through network and drives to get all of them
+# finish function descriptions
+#
+
+strWebServer = ''
+boolsetVars = 0
+boolDebug = 0
+strhost_Name = ''
+strmachine_Domain = ''
+strlogon_Domain = ''
+strlogon_Server = ''
+strsystem_Type = ''
+strnetwork_Card = ''
+strip_Address = ''
+strsubnet_Mask =' '
+strdefault_Gateway = ''
+strmac_Address =' '
+strnetwork_Speed = ''
+strnetwork_Type = ''
+strdhcp_Server = ''
+strdns_Server = ''
+strcpu = ''
+strmemory = ''
+strvolumes = ''
+strfree_Space = ''
+
+
+# Output the usage to the user
+def usage(strError):
+  strUsage = "Error: " + strError + "\nCommand syntax: " + sys.argv[0] + " [Web Server] [System Type] [Debug(Optional)]\nExample:        " + sys.argv[0] + " Nemesis.Olympus.local \"Development Unit\" 0"
+  return strUsage
+
+
+if len(sys.argv) >= 2:
+  strWebServer = sys.argv[1]
+else:
+  print usage('No Web Server specified')
+  quit()
+
+if len(sys.argv) >= 3:
+  getSystemType(sys.argv[2])
+else:
+  print usage('No System Type specified')
+  quit()
+
+if len(sys.argv) >= 4:
+  boolDebug = sys.argv[3]
+
+
+# Get the Hostname of the system
+def getHostname():
+  hostname = ""
+
+  try:
+    hostname = os.popen('hostname').readline().strip().upper()
+  except:
+    hostname = "ERROR"
+
+  return hostname
+
+
+# Get the CPU's Mhz from cpuinfo_max_freq
+def getCPUMHz():
+  cpu = ""
+
+  try:
+    with open('/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq','r') as f:
+      cpu = f.readline().strip()
+    cpu = int(cpu)/1000
+    cpu = str(cpu) + " MHz"
+  except:
+    cpu = "ERROR"
+
+  return cpu
+
+
+#Need to add check fo MB or GB
+# Get the total RAM for the system
+def getTotalRAM():
+    armmem = os.popen('vcgencmd get_mem arm').readline()
+    intARM = armmem.replace("arm=","").replace("'C\n","").replace("M","")
+    gpumem = os.popen('vcgencmd get_mem gpu').readline()
+    intGPU = gpumem.replace("gpu=","").replace("'C\n","").replace("M","")
+    intTotal = int(intARM)+int(intGPU)
+
+    return(str(intTotal) + " MB")
+
+
+# Extract processor from cpuinfo file
+def getProcessor():
+  cpuProcessor = ""
+
+  try:
+    f = open('/proc/cpuinfo','r')
+    for line in f:
+      if line[0:10]=='model name':
+        cpuProcessor = line[13:51]
+    f.close()
+  except:
+    cpuProcessor = "ERROR"
+
+  return cpuProcessor
+
+
+# Need to get more than the rootfs i.e. USB drives
+# Return information about disk space as a list (unit included)
+# Index 0: total disk space
+# Index 1: used disk space
+def getDiskSpace():
+  DISK_stats = ""
+  DISK_total = ""
+  DISK_free = ""
+
+  try:
+    f = os.popen("df -h")
+    for line in f:
+      if line[0:6]=='rootfs':
+        DISK_stats = line.split()[0:4]
+
+    DISK_total = DISK_stats[1] + "B " + DISK_stats[0]
+    DISK_free = DISK_stats[3] + "B " + DISK_stats[0]
+
+    DISK_stats = [DISK_total, DISK_free]
+  except:
+    DISK_stats = "ERROR"
+
+  return DISK_stats
+
+
+# Get the MAC address of the system
+def getMAC(interface):
+  try:
+    strMAC = open('/sys/class/net/%s/address' %interface).read()
+  except:
+    strMAC = "00:00:00:00:00:00"
+  return strMAC.strip().upper()
+
+
+# 
+def getGateway():
+  strGateway = os.popen("ip -4 route show default").read().split()
+  return strGateway[2].strip()
+
+
+#
+def getSpeed(interface):
+  try:
+    strSpeed = open('/sys/class/net/%s/speed' %interface).read().strip() + " Mb/s"
+  except:
+    strSpeed = "0 Mb/s"
+  return strSpeed
+
+
+#
+def getIPAddresses():
+  strAddresses = ""
+
+  try:
+    strAddresses = os.popen('hostname -I').readline().strip()
+  except:
+    strAddresses = "ERROR"
+
+  return strAddresses
+
+
+# Extract processor from cpuinfo file
+def getDNSServer():
+  dnsServer = ""
+
+  try:
+    f = open('/etc/resolv.conf','r')
+    for line in f:
+      if line[0:10]=='nameserver':
+        dnsServer = line[12:23].strip()
+    f.close()
+  except:
+    dnsServer = "ERROR"
+
+  return dnsServer
+
+
+# 
+def getNetworkType():
+  strNetworkType = "Ethernet"
+  return strNetworkType
+
+
+# 
+def getSubnetMask(interface):
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x891b, struct.pack('256s',interface))[20:24])
+
+
+# 
+def getNetworkCard():
+  strNetworkCard = "10/100 Mbit/s 8P8C USB adapter"
+  return strNetworkCard
+
+
+# 
+def getSystemType(strType):
+  strSystemType = strType
+  return strSystemType
+
+
+# Set the varable to the correct values for this system
+def setVars():
+  # Need to specify the global vars otherwise Python 
+  # assigns them as locals to the function.
+  global strWebServer
+  global boolsetVars
+  global strhost_Name
+  global strmachine_Domain
+  global strlogon_Domain
+  global strlogon_Server
+  global strsystem_Type
+  global strnetwork_Card
+  global strip_Address
+  global strsubnet_Mask
+  global strdefault_Gateway
+  global strmac_Address
+  global strnetwork_Speed
+  global strnetwork_Type
+  global strdhcp_Server
+  global strdns_Server
+  global strcpu
+  global strmemory
+  global strvolumes
+  global strfree_Space
+
+  DISK_stats = getDiskSpace()
+  strhost_Name = getHostname()
+  strmachine_Domain=strhost_Name
+  strlogon_Domain=strhost_Name
+  strlogon_Server=strhost_Name
+  strsystem_Type=getSystemType()
+  strnetwork_Card=getNetworkCard()
+  strip_Address=getIPAddresses()
+  strsubnet_Mask=getSubnetMask('eth0')
+  strdefault_Gateway=getGateway()
+  strmac_Address = getMAC('eth0')
+  strnetwork_Speed=getSpeed('eth0')
+  strnetwork_Type=getNetworkType()
+  strdhcp_Server=getDNSServer()
+  strdns_Server=getDNSServer()
+  strcpu = getCPUMHz() + " " + getProcessor()
+  strmemory=getTotalRAM()
+  strvolumes = DISK_stats[0]
+  strfree_Space = DISK_stats[1]
+  boolsetVars = 1
+
+
+# Prints out the variables for debugging
+def printVars():
+  if boolDebug:
+    print "System Variables"
+    print "boolsetVars:        " + str(boolsetVars)
+    print "boolDebug:          " + str(boolDebug)
+    print
+    print "Web Service Variables:"
+    print "strhost_Name:       " + strhost_Name
+    print "strmachine_Domain:  " + strmachine_Domain
+    print "strlogon_Domain:    " + strlogon_Domain
+    print "strlogon_Server:    " + strlogon_Server
+    print "strsystem_Type:     " + strsystem_Type
+    print "strnetwork_Card:    " + strnetwork_Card
+    print "strip_Address:      " + strip_Address
+    print "strsubnet_Mask:     " + strsubnet_Mask
+    print "strdefault_Gateway: " + strdefault_Gateway
+    print "strmac_Address:     " + strmac_Address
+    print "strnetwork_Speed:   " + strnetwork_Speed
+    print "strnetwork_Type:    " + strnetwork_Type
+    print "strdhcp_Server:     " + strdhcp_Server
+    print "strdns_Server:      " + strdns_Server
+    print "strcpu:             " + strcpu
+    print "strmemory:          " + strmemory
+    print "strvolumes:         " + strvolumes
+    print "strfree_Space:      " + strfree_Space
+    print
+
+
+# Sends the BGInfo request to the specified Web Server
+def SendToWebServer():
+  try:
+    if boolsetVars:
+      url="http://" + strWebServer + "/BGInfo4Pi/Service1.svc?singleWsdl" # If the ?wsdl is used there is a recursion issue as it refers to itself
+      c = suds.client.Client(url) # create client
+      if boolDebug:
+        print "URL: " + url
+        print
+        print "Client call:"
+        print c
+      c.service.SendToDB(strhost_Name, strmachine_Domain, strlogon_Domain, strlogon_Server, strsystem_Type, strnetwork_Card, strip_Address, strsubnet_Mask, strdefault_Gateway, strmac_Address, strnetwork_Speed, strnetwork_Type, strdhcp_Server, strdns_Server, strcpu, strmemory, strvolumes, strfree_Space)  # run WS
+    else:
+      print "Variables not set correctly"
+  except StandardError:
+      print "Something went very wrong!"
+
+
+# Main section
+setVars()
+printVars()
+SendToWebServer()
