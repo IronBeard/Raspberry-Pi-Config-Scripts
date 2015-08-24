@@ -11,7 +11,6 @@ import struct
 #
 # Need to:
 # add more error handling
-# reorder methods to match variable list
 # interate through network and drives to get all of them
 # finish function descriptions
 #
@@ -45,22 +44,6 @@ def usage(strError):
   return strUsage
 
 
-if len(sys.argv) >= 2:
-  strWebServer = sys.argv[1]
-else:
-  print usage('No Web Server specified')
-  quit()
-
-if len(sys.argv) >= 3:
-  getSystemType(sys.argv[2])
-else:
-  print usage('No System Type specified')
-  quit()
-
-if len(sys.argv) >= 4:
-  boolDebug = sys.argv[3]
-
-
 # Get the Hostname of the system
 def getHostname():
   hostname = ""
@@ -71,6 +54,83 @@ def getHostname():
     hostname = "ERROR"
 
   return hostname
+
+
+# 
+def setSystemType(strType):
+  global strsystem_Type
+  strsystem_Type = strType
+  return strsystem_Type
+
+
+# 
+def getNetworkCard():
+  strNetworkCard = "10/100 Mbit/s 8P8C USB adapter"
+  return strNetworkCard
+
+
+#
+def getIPAddresses():
+  strAddresses = ""
+
+  try:
+    strAddresses = os.popen('hostname -I').readline().strip()
+  except:
+    strAddresses = "ERROR"
+
+  return strAddresses
+
+
+# 
+def getSubnetMask(interface):
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x891b, struct.pack('256s',interface))[20:24])
+
+
+# 
+def getGateway():
+  strGateway = os.popen("ip -4 route show default").read().split()
+  return strGateway[2].strip()
+
+
+# Get the MAC address of the system
+def getMAC(interface):
+  try:
+    strMAC = open('/sys/class/net/%s/address' %interface).read()
+  except:
+    strMAC = "00:00:00:00:00:00"
+  return strMAC.strip().upper()
+
+
+#
+def getSpeed(interface):
+  try:
+    strSpeed = open('/sys/class/net/%s/speed' %interface).read().strip() + " Mb/s"
+  except:
+    strSpeed = "0 Mb/s"
+  return strSpeed
+
+
+# 
+def getNetworkType():
+  strNetworkType = "Ethernet"
+  return strNetworkType
+
+
+# Extract DNS Server from resolv.conf file
+def getDNSServer():
+  dnsServer = ""
+
+  try:
+    f = open('/etc/resolv.conf','r')
+    for line in f:
+      if line[0:10]=='nameserver':
+        dnsServer = line[12:23].strip()
+    f.close()
+  except:
+    dnsServer = "ERROR"
+
+  return dnsServer
 
 
 # Get the CPU's Mhz from cpuinfo_max_freq
@@ -88,18 +148,6 @@ def getCPUMHz():
   return cpu
 
 
-#Need to add check fo MB or GB
-# Get the total RAM for the system
-def getTotalRAM():
-    armmem = os.popen('vcgencmd get_mem arm').readline()
-    intARM = armmem.replace("arm=","").replace("'C\n","").replace("M","")
-    gpumem = os.popen('vcgencmd get_mem gpu').readline()
-    intGPU = gpumem.replace("gpu=","").replace("'C\n","").replace("M","")
-    intTotal = int(intARM)+int(intGPU)
-
-    return(str(intTotal) + " MB")
-
-
 # Extract processor from cpuinfo file
 def getProcessor():
   cpuProcessor = ""
@@ -114,6 +162,18 @@ def getProcessor():
     cpuProcessor = "ERROR"
 
   return cpuProcessor
+
+
+#Need to add check fo MB or GB
+# Get the total RAM for the system
+def getTotalRAM():
+    armmem = os.popen('vcgencmd get_mem arm').readline()
+    intARM = armmem.replace("arm=","").replace("'C\n","").replace("M","")
+    gpumem = os.popen('vcgencmd get_mem gpu').readline()
+    intGPU = gpumem.replace("gpu=","").replace("'C\n","").replace("M","")
+    intTotal = int(intARM)+int(intGPU)
+
+    return(str(intTotal) + " MB")
 
 
 # Need to get more than the rootfs i.e. USB drives
@@ -141,82 +201,6 @@ def getDiskSpace():
   return DISK_stats
 
 
-# Get the MAC address of the system
-def getMAC(interface):
-  try:
-    strMAC = open('/sys/class/net/%s/address' %interface).read()
-  except:
-    strMAC = "00:00:00:00:00:00"
-  return strMAC.strip().upper()
-
-
-# 
-def getGateway():
-  strGateway = os.popen("ip -4 route show default").read().split()
-  return strGateway[2].strip()
-
-
-#
-def getSpeed(interface):
-  try:
-    strSpeed = open('/sys/class/net/%s/speed' %interface).read().strip() + " Mb/s"
-  except:
-    strSpeed = "0 Mb/s"
-  return strSpeed
-
-
-#
-def getIPAddresses():
-  strAddresses = ""
-
-  try:
-    strAddresses = os.popen('hostname -I').readline().strip()
-  except:
-    strAddresses = "ERROR"
-
-  return strAddresses
-
-
-# Extract processor from cpuinfo file
-def getDNSServer():
-  dnsServer = ""
-
-  try:
-    f = open('/etc/resolv.conf','r')
-    for line in f:
-      if line[0:10]=='nameserver':
-        dnsServer = line[12:23].strip()
-    f.close()
-  except:
-    dnsServer = "ERROR"
-
-  return dnsServer
-
-
-# 
-def getNetworkType():
-  strNetworkType = "Ethernet"
-  return strNetworkType
-
-
-# 
-def getSubnetMask(interface):
-  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x891b, struct.pack('256s',interface))[20:24])
-
-
-# 
-def getNetworkCard():
-  strNetworkCard = "10/100 Mbit/s 8P8C USB adapter"
-  return strNetworkCard
-
-
-# 
-def getSystemType(strType):
-  strSystemType = strType
-  return strSystemType
-
-
 # Set the varable to the correct values for this system
 def setVars():
   # Need to specify the global vars otherwise Python 
@@ -227,7 +211,6 @@ def setVars():
   global strmachine_Domain
   global strlogon_Domain
   global strlogon_Server
-  global strsystem_Type
   global strnetwork_Card
   global strip_Address
   global strsubnet_Mask
@@ -242,12 +225,10 @@ def setVars():
   global strvolumes
   global strfree_Space
 
-  DISK_stats = getDiskSpace()
   strhost_Name = getHostname()
   strmachine_Domain=strhost_Name
   strlogon_Domain=strhost_Name
   strlogon_Server=strhost_Name
-  strsystem_Type=getSystemType()
   strnetwork_Card=getNetworkCard()
   strip_Address=getIPAddresses()
   strsubnet_Mask=getSubnetMask('eth0')
@@ -259,6 +240,7 @@ def setVars():
   strdns_Server=getDNSServer()
   strcpu = getCPUMHz() + " " + getProcessor()
   strmemory=getTotalRAM()
+  DISK_stats = getDiskSpace()
   strvolumes = DISK_stats[0]
   strfree_Space = DISK_stats[1]
   boolsetVars = 1
@@ -309,6 +291,22 @@ def SendToWebServer():
       print "Variables not set correctly"
   except StandardError:
       print "Something went very wrong!"
+
+
+if len(sys.argv) >= 2:
+  strWebServer = sys.argv[1]
+else:
+  print usage('No Web Server specified')
+  quit()
+
+if len(sys.argv) >= 3:
+  setSystemType(sys.argv[2])
+else:
+  print usage('No System Type specified')
+  quit()
+
+if len(sys.argv) >= 4:
+  boolDebug = sys.argv[3]
 
 
 # Main section
