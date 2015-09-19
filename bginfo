@@ -13,6 +13,8 @@ import struct
 # add more error handling
 # interate through network and drives to get all of them
 # finish function descriptions
+# Use string.format function instead of +
+# https://docs.python.org/2/tutorial/inputoutput.html
 #
 
 strWebServer = ''
@@ -279,7 +281,7 @@ def printVars():
 def SendToWebServer():
   try:
     if boolsetVars:
-      url="http://" + strWebServer + "/BGInfo4Pi/Service1.svc?singleWsdl" # If the ?wsdl is used there is a recursion issue as it refers to itself
+      url="http://" + strWebServer + "/BGInfo4Pi/BGInfo4Pi.svc?singleWsdl" # If the ?wsdl is used there is a recursion issue as it refers to itself
       c = suds.client.Client(url) # create client
       if boolDebug:
         print "URL: " + url
