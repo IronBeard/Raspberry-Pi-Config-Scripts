@@ -193,19 +193,25 @@ do_setup_pi() {
   do_change_location
   # Set the Memory split
   do_memory_split
+  # Disable the raspi_config reminder
+  disable_raspi_config_at_boot
+  
+  ASK_TO_REBOOT=1
+}
+
+do_default_packages() {
   # Setup Domain Networking
   ./setupNetworking.sh
   # Set the motd to the Domain default
   ./motd.sh
   # Install monit to allow network monitoring of the Pi
   ./InstallMonit.sh
-  # Remove the unused wolfram-engine and minecraft-pi
-  apt-get purge -y wolfram-engine minecraft-pi
+  # Install usbmount and ntfs-3g
+  ./InstallUSBMount.sh
+  # Install samba (Not yet implemented)
+  # Remove the unused wolfram-engine, minecraft-pi and sonic-pi
+  apt-get purge -y wolfram-engine minecraft-pi sonic-pi
   apt-get autoremove -y
-  # Disable the raspi_config reminder
-  disable_raspi_config_at_boot
-  
-  ASK_TO_REBOOT=1
 }
 
 do_change_hostname() {
@@ -291,6 +297,11 @@ do_camera() {
 }
 
 # Custom Installers
+do_install_minidlna() {
+  ./InstallMiniDLNA.sh
+  whiptail --msgbox "MiniDLNA Installation Complete!" 20 60 1
+}
+
 do_install_airpi() {
   ./InstallAirPi.sh
   whiptail --msgbox "AirPi Installation Complete!" 20 60 1
@@ -355,18 +366,19 @@ fi
 
 #echo -e ${WHITE}""$(tput sgr0)
 
-#Add Install of SendEmail, maybe bundle all the base packages into one single install option "Install ..."
-#Also add: usbmount, ntfs-3g, samba
+#Add Install of SendEmail
 calc_wt_size
 while true; do
   FUN=$(whiptail --title "Raspberry Pi - Olympus Configuration/Installation Tool (piconf)" --menu "Configuration/Installation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-    "01 Setup Pi" "Install all of the default packages on this Pi" \
-    "02 Change User Password" "Change password for the default user (pi)" \
-    "03 Install AirPi" "AirPi allows this Pi to act as an iTunes endpoint" \
-    "04 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
-    "05 Install Motion" "Motion turns this Pi into a capable security camera" \
-    "06 Update Pi" "Update this Pi's packages" \
-    "07 About piconf" "Information about this configuration tool" \
+    "01 Setup Pi" "Setup the  Pi to run on the Olympus Domain" \
+    "02 Install default packages" "Install all of the default packages on this Pi" \
+    "03 Change User Password" "Change password for the default user (pi)" \
+    "04 Install MiniDLNA" "MiniDLNA allows this Pi to act as a DLNA server" \
+    "05 Install AirPi" "AirPi allows this Pi to act as an iTunes endpoint" \
+    "06 Enable Camera" "Enable this Pi to work with the Raspberry Pi Camera" \
+    "07 Install Motion" "Motion turns this Pi into a capable security camera" \
+    "08 Update Pi" "Update this Pi's packages" \
+    "09 About piconf" "Information about this configuration tool" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -374,12 +386,14 @@ while true; do
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       01\ *) do_setup_pi ;;
-      02\ *) do_change_pass ;;
-      03\ *) do_install_airpi ;;
-      04\ *) do_camera ;;
-      05\ *) do_install_motion ;;
-      06\ *) do_update ;;
-      07\ *) do_about ;;
+      02\ *) do_default_packages ;;
+      03\ *) do_change_pass ;;
+      04\ *) do_install_minidlna ;;
+      05\ *) do_install_airpi ;;
+      06\ *) do_camera ;;
+      07\ *) do_install_motion ;;
+      08\ *) do_update ;;
+      09\ *) do_about ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   else
