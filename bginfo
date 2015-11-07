@@ -120,6 +120,7 @@ def getNetworkType():
 
 
 # Extract DNS Server from resolv.conf file
+# https://www.google.co.nz/search?q=raspbian+dns+server&sourceid=ie7&rls=com.microsoft:en-NZ:IE-SearchBox&ie=&oe=&gfe_rd=cr&ei=GHAKVrfmHczu8wfdnIGgAQ&gws_rd=ssl#q=raspbian+dns+settings
 def getDNSServer():
   dnsServer = ""
 
@@ -198,7 +199,7 @@ def getDiskSpace():
 
     DISK_stats = [DISK_total, DISK_free]
   except:
-    DISK_stats = "ERROR"
+    DISK_stats = "00000"
 
   return DISK_stats
 
