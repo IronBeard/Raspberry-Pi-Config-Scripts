@@ -35,10 +35,10 @@ if [ `whoami` != root ]; then
 fi
 
 echo -e ${WHITE}"Install ${PURPLE}monit 5.11 ${WHITE} build prerequisites"$(tput sgr0)
-sudo apt-get -y install libssl-dev
+apt-get -y install libssl-dev
 
 echo -e ${WHITE}"Install ${PURPLE}monit 5.4 ${WHITE}from repo"$(tput sgr0)
-sudo apt-get install -y monit
+apt-get install -y monit
 
 echo -e ${WHITE}"Create folder for ${PURPLE}monit"$(tput sgr0)
 mkdir -v ~/monit
@@ -60,10 +60,10 @@ make
 make install
 
 echo -e ${WHITE}"Copy ${PURPLE}monit ${WHITE}over the installed ${PURPLE}monit 5.4"$(tput sgr0)
-sudo cp -f -v ~/monit/monit-5.11/monit /usr/bin/monit
+cp -f -v ~/monit/monit-5.11/monit /usr/bin/monit
 
 echo -e ${WHITE}"Move the${LIGHTBLUE} monitrc ${WHITE}config file to monits default location"$(tput sgr0)
-sudo mv -v /etc/monit/monitrc /etc/monitrc
+mv -v /etc/monit/monitrc /etc/monitrc
 
 echo -e ${WHITE}"Deleting downloaded ${PURPLE}monit${WHITE}"$(tput sgr0)
 #cd ..
@@ -142,7 +142,7 @@ sed -i "s|UNITNAME|$CURRENT_HOSTNAME|g" /etc/monit/conf.d/monitdef
 grep -A 2 "$CURRENT_HOSTNAME" /etc/monit/conf.d/monitdef
 
 echo -e ${WHITE}"Setting config scripts permissions"$(tput sgr0)
-sudo chmod -v 600 /etc/monit/conf.d/*
+chmod -v 600 /etc/monit/conf.d/*
 
 echo -e ${WHITE}"Checking the ${PURPLE}monit ${WHITE}config syntax"$(tput sgr0)
 service monit syntax
