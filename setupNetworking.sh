@@ -58,17 +58,43 @@ iface eth0 inet dhcp
 
 auto wlan0
 allow-hotplug wlan0
-iface wlan0 inet dhcp
-   wpa-scan-ssid 1
-   wpa-ap-scan 1
-   wpa-key-mgmt WPA-PSK
-   wpa-proto RSN WPA
-   wpa-pairwise CCMP TKIP
-   wpa-group CCMP TKIP
-   wpa-ssid Aura 
-   wpa-psk 69a26ff097446d25c33e53f710ccfb79bf99b5f866469bf49dac5a04e1510a25
-
+iface wlan0 inet manual
+wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
 iface default inet dhcp' > /etc/network/interfaces"
+
+  echo -e ${WHITE}"Replace complete"$(tput sgr0)
+
+  ScreenLines
+  echo -e ${WHITE}"Replacing current ${NONE}/etc/wpa_supplicant/wpa_supplicant.conf ${WHITE}with our network config for Olympus"$(tput sgr0)
+  sudo bash -c "echo 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid=\"Aura\"
+    scan_ssid=1
+    proto=RSN
+    key_mgmt=WPA-PSK
+    psk=69a26ff097446d25c33e53f710ccfb79bf99b5f866469bf49dac5a04e1510a25
+    priority=1
+}
+
+network={
+    ssid=\"Boreas\"
+    scan_ssid=1
+    proto=RSN
+    key_mgmt=WPA-PSK
+    psk=dd90713494af0d3d8bbe603d733d5a5e40bc4176c473ec2ba5d6de9de9915e53
+    priority=2
+}
+
+network={
+    ssid=\"iPhone\"
+    scan_ssid=1
+    proto=RSN
+    key_mgmt=WPA-PSK
+    psk=cccde3cabe384acd37c9151a3f8977ea12ec202706ce4eab29513d293c3a910d
+    priority=3
+}' > /etc/wpa_supplicant/wpa_supplicant.conf"
 
   echo -e ${WHITE}"Replace complete"$(tput sgr0)
 
@@ -88,6 +114,12 @@ allow-hotplug wlan0
 iface wlan0 inet manual
 wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
 iface default inet dhcp' > /etc/network/interfaces"
+
+  echo -e ${WHITE}"Rollback complete"$(tput sgr0)
+  
+  echo -e ${WHITE}"Reset ${NONE}/etc/wpa_supplicant/wpa_supplicant.conf ${WHITE}to factory default"$(tput sgr0)
+  sudo bash -c "echo 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1' > /etc/wpa_supplicant/wpa_supplicant.conf"
 
   echo -e ${WHITE}"Rollback complete"$(tput sgr0)
 

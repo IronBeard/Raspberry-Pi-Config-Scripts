@@ -1,5 +1,18 @@
 #!/usr/bin/python
 
+# Usage:
+# Copy bginfo to the machine
+# Install the suds python module
+#     sudo apt-get install -y python-suds
+# Set the execute (x) flags
+# Add bginfo to cron:
+#     Run sudo crontab -e
+#   Using the following lines:
+#     0  0 * * * /home/pi/bginfo Nemesis "AirTunes Endpoint"
+#     0 12 * * * /home/pi/bginfo Nemesis "AirTunes Endpoint"
+# Run it manually to test:
+#     ./bginfo Nemesis "AirTunes Endpoint" 0
+
 # import libraries needed
 from suds.client import *
 import sys
@@ -188,16 +201,37 @@ def getDiskSpace():
   DISK_total = ""
   DISK_free = ""
 
+# Total df | grep '^/dev/root\|/dev/[hs][bd]' | awk '{s+=$2} END {print s/1048576}'
+# Used  df | grep '^/dev/root\|/dev/[hs][bd]' | awk '{s+=$4} END {print s/1048576}'
   try:
-    f = os.popen("df -h")
+    Total = 0
+    Free = 0
+
+    f = os.popen("df -BG | grep '^/dev/root\|/dev/[hs][bd]' | awk '{s+=$2} END {print s}'")
     for line in f:
-      if line[0:6]=='rootfs':
-        DISK_stats = line.split()[0:4]
+            print str(line)
+            DISK_stats = line.split()[0:1]
+            DISK_total = DISK_stats[0] + "GB"
+            Total = DISK_total
 
-    DISK_total = DISK_stats[1] + "B " + DISK_stats[0]
-    DISK_free = DISK_stats[3] + "B " + DISK_stats[0]
+    f = os.popen("df -BG | grep '^/dev/root\|/dev/[hs][bd]' | awk '{s+=$4} END {print s}'")
+    for line in f:
+            print str(line)
+            DISK_stats = line.split()[0:1]
+            DISK_total = DISK_stats[0] + "GB"
+            Free = DISK_total
+            
+    DISK_stats = [Total, Free]
+  
+#    f = os.popen("df -h")
+#    for line in f:
+#      if line[0:9]=='/dev/root':
+#        DISK_stats = line.split()[0:4]
 
-    DISK_stats = [DISK_total, DISK_free]
+#    DISK_total = DISK_stats[1] + "B " + DISK_stats[0]
+#    DISK_free = DISK_stats[3] + "B " + DISK_stats[0]
+
+#    DISK_stats = [DISK_total, DISK_free]
   except:
     DISK_stats = "00000"
 
@@ -310,6 +344,8 @@ else:
 
 if len(sys.argv) >= 4:
   boolDebug = sys.argv[3]
+else:
+  boolDebug = 0
 
 
 # Main section
