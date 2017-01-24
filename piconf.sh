@@ -224,7 +224,7 @@ do_default_packages() {
   # Install usbmount and ntfs-3g
   ./InstallUSBMount.sh
   # Install samba (Not yet implemented)
-  # Remove the unused wolfram-engine, minecraft-pi and sonic-pi
+  # Remove the unused wolfram-engine, minecraft-pi and sonic-pi <- Not needed in Jessie Lite
   apt-get purge -y wolfram-engine minecraft-pi sonic-pi
   apt-get autoremove -y
 }
