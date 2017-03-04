@@ -89,9 +89,11 @@ echo '##########################################################################
 ## Global section
 ###############################################################################
 #
-  set mailserver mail.orcon.net.nz
+  set mailserver smtp-mail.outlook.com port 587
+    username "" password ""
+    using tlsv12
 #
-  set alert GarethPhilpott@hotmail.com
+  set alert 
 #
   set httpd port 2812
      use address 0.0.0.0
@@ -156,13 +158,15 @@ echo -e ${WHITE}"Final steps:"$(tput sgr0)
 echo -e ${WHITE}""$(tput sgr0)
 echo -e ${WHITE}"1. Configure any needed ${PURPLE}monit ${WHITE}settings in ${LIGHTBLUE}monitrc"$(tput sgr0)
 echo -e ${WHITE}"    sudo nano /etc/monitrc"$(tput sgr0)
-echo -e ${WHITE}"1. Configure any needed custom settings in ${LIGHTBLUE}monitdef"$(tput sgr0)
+echo -e ${WHITE}"2. Configure any needed custom settings in ${LIGHTBLUE}monitdef"$(tput sgr0)
 echo -e ${WHITE}"    sudo nano /etc/monit/conf.d/monitdef"$(tput sgr0)
-echo -e ${WHITE}"3. Confirm that the syntax in both the ${LIGHTBLUE}monitrc ${WHITE} and ${LIGHTBLUE}monitdef ${WHITE}config files is correct"$(tput sgr0)
+echo -e ${WHITE}"3. Add EMail settings in to ${LIGHTBLUE}monitdef"$(tput sgr0)
+echo -e ${WHITE}"    sudo nano /etc/monit/conf.d/monitdef"$(tput sgr0)
+echo -e ${WHITE}"4. Confirm that the syntax in both the ${LIGHTBLUE}monitrc ${WHITE} and ${LIGHTBLUE}monitdef ${WHITE}config files is correct"$(tput sgr0)
 echo -e ${WHITE}"    sudo service monit syntax"$(tput sgr0)
-echo -e ${WHITE}"4. Restart ${PURPLE}monit ${WHITE}to test the changes"$(tput sgr0)
+echo -e ${WHITE}"5. Restart ${PURPLE}monit ${WHITE}to test the changes"$(tput sgr0)
 echo -e ${WHITE}"    sudo service monit restart"$(tput sgr0)
-echo -e ${WHITE}"5. Reboot"$(tput sgr0)
+echo -e ${WHITE}"6. Reboot"$(tput sgr0)
 echo -e ${WHITE}""$(tput sgr0)
 
 #Reset all attributes in case we changed anything
