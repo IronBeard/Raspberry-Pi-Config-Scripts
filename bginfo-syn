@@ -135,7 +135,8 @@ def getDNSServer():
     f = open('/etc/resolv.conf','r')
     for line in f:
       if line[0:10]=='nameserver':
-        dnsServer = line[12:23].strip()
+        dnsServer = line[11:].strip() # blank in the second position is go to the end
+
     f.close()
   except:
     dnsServer = "ERROR"
@@ -166,7 +167,7 @@ def getProcessor():
     f = open('/proc/cpuinfo','r')
     for line in f:
       if line[0:9]=='Processor':
-        cpuProcessor = line[13:51]
+        cpuProcessor = line[12:-1] # -1 in the second position is go to the end then back one
     f.close()
   except:
     cpuProcessor = "ERROR"
@@ -294,21 +295,46 @@ def printVars():
 
 
 # Sends the BGInfo request to the specified Web Server
-#def SendToWebServer():
-#  try:
-#    if boolsetVars:
-#      url="http://" + strWebServer + "/BGInfo4Pi/BGInfo4Pi.svc?singleWsdl" # If the ?wsdl is used there is a recursion issue as it refers to itself
-#      c = suds.client.Client(url) # create client
-#      if boolDebug:
-#        print "URL: " + url
-#        print
-#        print "Client call:"
-#        print c
-#      c.service.SendToDB(strhost_Name, strmachine_Domain, strlogon_Domain, strlogon_Server, strsystem_Type, strnetwork_Card, strip_Address, strsubnet_Mask, strdefault_Gateway, strmac_Address, strnetwork_Speed, strnetwork_Type, strdhcp_Server, strdns_Server, strcpu, strmemory, strvolumes, strfree_Space)  # run WS
-#    else:
-#      print "Variables not set correctly"
-#  except StandardError:
-#      print "Something went very wrong!"
+def SendToWebServer():
+  try:
+    if boolsetVars:
+      url="curl --header \"Content-Type: text/xml;charset=UTF-8\" \
+--header \"SOAPAction: \\\"http://Olmypus.local/IBGInfo4Pi/SendToDB\\\"\" \
+--data \"<soapenv:Envelope xmlns:soapenv=\\\"http://schemas.xmlsoap.org/soap/envelope/\\\" xmlns:olm=\\\"http://Olmypus.local\\\"> \
+   <soapenv:Header/> \
+   <soapenv:Body> \
+      <olm:SendToDB> \
+        <olm:host_Name>" + strhost_Name + "</olm:host_Name> \
+        <olm:machine_Domain>" + strmachine_Domain + "</olm:machine_Domain> \
+        <olm:logon_Domain>" + strlogon_Domain + "</olm:logon_Domain> \
+        <olm:logon_Server>" + strlogon_Server + "</olm:logon_Server> \
+        <olm:system_Type>" + strsystem_Type + "</olm:system_Type> \
+        <olm:network_Card>" + strnetwork_Card + "</olm:network_Card> \
+        <olm:ip_Address>" + strip_Address + "</olm:ip_Address> \
+        <olm:subnet_Mask>" + strsubnet_Mask + "</olm:subnet_Mask> \
+        <olm:default_Gateway>" + strdefault_Gateway + "</olm:default_Gateway> \
+        <olm:mac_Address>" + strmac_Address + "</olm:mac_Address> \
+        <olm:network_Speed>" + strnetwork_Speed + "</olm:network_Speed> \
+        <olm:network_Type>" + strnetwork_Type + "</olm:network_Type> \
+        <olm:dhcp_Server>" + strdhcp_Server + "</olm:dhcp_Server> \
+        <olm:dns_Server>" + strdns_Server + "</olm:dns_Server> \
+        <olm:cpu>" + strcpu + "</olm:cpu> \
+        <olm:memory>" + strmemory + "</olm:memory> \
+        <olm:volumes>" + strvolumes + "</olm:volumes> \
+        <olm:free_Space>" + strfree_Space + "</olm:free_Space> \
+      </olm:SendToDB> \
+   </soapenv:Body> \
+</soapenv:Envelope>\" \
+http://nemesis.olympus.home/BGInfo4Pi/BGInfo4Pi.svc"
+      if boolDebug == 1:
+        print "URL: " + url
+        print
+
+      os.system(url)
+    else:
+      print "Variables not set correctly"
+  except StandardError:
+      print "Something went very wrong!"
 
 
 if len(sys.argv) >= 2:
@@ -332,4 +358,5 @@ else:
 # Main section
 setVars()
 printVars()
-#SendToWebServer()
+SendToWebServer()
+print

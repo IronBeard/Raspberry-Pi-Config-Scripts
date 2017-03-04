@@ -111,7 +111,7 @@ def getGateway():
 # Get the MAC address of the system
 def getMAC(interface):
   try:
-    strMAC = open('/sys/class/net/%s/address' %interface).read()
+    strMAC = open('/sys/class/net/%s/address' %interface).read().replace(":", "-")
   except:
     strMAC = "00:00:00:00:00:00"
   return strMAC.strip().upper()
@@ -141,7 +141,7 @@ def getDNSServer():
     f = open('/etc/resolv.conf','r')
     for line in f:
       if line[0:10]=='nameserver':
-        dnsServer = line[12:23].strip()
+        dnsServer = line[11:].strip() # blank in the second position is go to the end
     f.close()
   except:
     dnsServer = "ERROR"
@@ -172,7 +172,7 @@ def getProcessor():
     f = open('/proc/cpuinfo','r')
     for line in f:
       if line[0:10]=='model name':
-        cpuProcessor = line[13:51]
+        cpuProcessor = line[13:-1] # -1 in the second position is go to the end then back one
     f.close()
   except:
     cpuProcessor = "ERROR"
