@@ -37,7 +37,7 @@ fi
 echo -e ${WHITE}"Backup ${PURPLE}MiniDLNA ${WHITE} config for rollback"$(tput sgr0)
 cp /etc/minidlna.conf /etc/minidlna.conf.bak
 
-echo -e ${WHITE}"Using to SED edit ${LIGHTBLUE}minidlna.conf ${WHITE}to change the:"$(tput sgr0)
+echo -e ${WHITE}"Using SED to edit ${LIGHTBLUE}minidlna.conf ${WHITE}to change the:"$(tput sgr0)
 echo -e ${WHITE}"    ${GREEN}media_dir ${WHITE}to point to the ${PURPLE}USBMount ${WHITE}directories"$(tput sgr0)
 sed -i 's|media_dir=/var/lib/minidlna|media_dir=V,/media/usb0\nmedia_dir=V,/media/usb1\nmedia_dir=V,/media/usb2\nmedia_dir=V,/media/usb3\nmedia_dir=V,/media/usb4\nmedia_dir=V,/media/usb5\nmedia_dir=V,/media/usb6\nmedia_dir=V,/media/usb7\n|g' /etc/minidlna.conf
 # Need to work out how to get the Pi name in here
