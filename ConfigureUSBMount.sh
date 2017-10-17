@@ -1,10 +1,5 @@
 #!/bin/bash
 
-#Functions
-function ScreenLines {
-  printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
-}
-
 #Text Colors
 NONE='\033[00m'
 BLACK='\033[00;30m'
@@ -27,12 +22,6 @@ BOLD='\033[1m'
 UNDERLINE='\033[4m'
 
 echo -e ${WHITE}`date`$(tput sgr0)
-
-#Ensure that the script has been run as root
-if [ `whoami` != root ]; then
-  echo -e ${WHITE}"Due to the nature of the changes that this script makes please run it as ${RED}root ${WHITE}or by using ${RED}sudo"$(tput sgr0)
-  exit
-fi
 
 echo -e ${WHITE}"Backup ${PURPLE}USBMount ${WHITE} config for rollback"$(tput sgr0)
 cp /etc/usbmount/usbmount.conf /etc/usbmount/usbmount.conf.bak
