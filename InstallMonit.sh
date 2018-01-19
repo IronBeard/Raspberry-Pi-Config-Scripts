@@ -1,5 +1,16 @@
 #!/bin/bash
 
+#DESCRIPTION
+#    .
+#NOTES
+#    File Name      : InstallMonit.sh
+#    Author         : Gareth Philpott
+#    Date           : 09/01/2017
+#    Prerequisite   : 
+#    Copyright 2017 - Gareth Philpott
+#EXAMPLE
+#    ./InstallMonit.sh
+
 #Functions
 function ScreenLines {
   printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
@@ -41,13 +52,14 @@ echo -e ${WHITE}"Install ${PURPLE}monit 5.4 ${WHITE}from repo"$(tput sgr0)
 apt-get install -y monit
 
 echo -e ${WHITE}"Create folder for ${PURPLE}monit"$(tput sgr0)
-mkdir -v ~/monit
-cd ~/monit
+mkdir -v /home/pi/monit
+cd /home/pi/monit
 
 echo -e ${WHITE}"Get ${PURPLE}monit ${WHITE}from ${RED}http://mmonit.com/monit"$(tput sgr0)
 #wget http://mmonit.com/monit/dist/binary/5.11/monit-5.11-linux-arm.tar.gz
 #wget https://mmonit.com/monit/dist/binary/5.14/monit-5.14-linux-arm.tar.gz
-wget http://mmonit.com/monit/dist/monit-5.11.tar.gz
+#wget http://mmonit.com/monit/dist/monit-5.11.tar.gz
+wget http://Nemesis/Downloads/monit-5.11.tar.gz
 
 echo -e ${WHITE}"Unpack ${PURPLE}monit ${WHITE}from the downloaded tar"$(tput sgr0)
 #tar zxvf monit-5.11-linux-arm.tar.gz
@@ -60,14 +72,14 @@ make
 make install
 
 echo -e ${WHITE}"Copy ${PURPLE}monit ${WHITE}over the installed ${PURPLE}monit 5.4"$(tput sgr0)
-cp -f -v ~/monit/monit-5.11/monit /usr/bin/monit
+cp -f -v /home/pi/monit/monit-5.11/monit /usr/bin/monit
 
 echo -e ${WHITE}"Move the${LIGHTBLUE} monitrc ${WHITE}config file to monits default location"$(tput sgr0)
 mv -v /etc/monit/monitrc /etc/monitrc
 
 echo -e ${WHITE}"Deleting downloaded ${PURPLE}monit${WHITE}"$(tput sgr0)
 #cd ..
-#rm -r -v ~/monit/
+#rm -r -v /home/pi/monit/
 
 echo -e ${WHITE}"Using to SED edit the service script and change the ${LIGHTBLUE}monitrc ${WHITE}path from:"$(tput sgr0)
 echo -e ${WHITE}'CONFIG="/etc/monit/monitrc"'$(tput sgr0)
@@ -89,11 +101,13 @@ echo '##########################################################################
 ## Global section
 ###############################################################################
 #
-  set mailserver smtp-mail.outlook.com port 587
+  set mailserver mail.domain.domain.com port 587
     username "" password ""
     using tlsv12
 #
   set alert 
+#
+  set mail-format { from: @olympus.geek.nz }
 #
   set httpd port 2812
      use address 0.0.0.0
