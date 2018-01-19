@@ -39,9 +39,14 @@ UNDERLINE='\033[4m'
 
 echo -e ${WHITE}`date`$(tput sgr0)
 
-# Check for prerequisites?
+echo -e ${WHITE}"Checking for prerequisites"$(tput sgr0)
+packages="hostapd isc-dhcp-server iptables-persistent"
 
-whoami > whoami.txt
+for package in $packages; do
+    dpkg -s "$package" >/dev/null 2>&1 || {
+		apt-get -y install hostapd isc-dhcp-server iptables-persistent
+}
+done
 
 echo -e ${WHITE}"Backup ${PURPLE}dhcpcd ${WHITE}config for rollback"$(tput sgr0)
 cp /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.bak
@@ -113,13 +118,13 @@ wpa_group_rekey=86400
 ieee80211n=1
 wme_enabled=1' > /etc/hostapd/hostapd.conf"
 
-echo -e ${WHITE}"Backup ${PURPLE}hostapd ${WHITE} config for rollback"$(tput sgr0)
+echo -e ${WHITE}"Backup ${PURPLE}hostapd ${WHITE}config for rollback"$(tput sgr0)
 cp /etc/default/hostapd /etc/default/hostapd.bak
 echo -e ${WHITE}"Using SED to edit ${LIGHTBLUE}hostapd ${WHITE}to change the:"$(tput sgr0)
 echo -e ${WHITE}"    ${GREEN}DAEMON_CONF ${WHITE}to point to the ${LIGHTBLUE}hostapd.conf"$(tput sgr0)
 sed -i 's|DAEMON_CONF=""|\DAEMON_CONF="/etc/hostapd/hostapd.conf"|g' /etc/hostapd/hostapd.conf
 
-echo -e ${WHITE}"Backup ${PURPLE}hostapd ${WHITE} config for rollback"$(tput sgr0)
+echo -e ${WHITE}"Backup ${PURPLE}hostapd ${WHITE}config for rollback"$(tput sgr0)
 cp /etc/init.d/hostapd /etc/init.d/hostapd.bak
 echo -e ${WHITE}"Using SED to edit ${LIGHTBLUE}hostapd ${WHITE}to change the:"$(tput sgr0)
 echo -e ${WHITE}"    ${GREEN}DAEMON_CONF ${WHITE}to point to ${LIGHTBLUE}hostapd"$(tput sgr0)
