@@ -7,7 +7,7 @@ locale-gen
 locale -a
 locale
 update-locale LANG=en_NZ.UTF-8
-dpkg-reconfigure keyboard-configuration
+dpkg-reconfigure -f noninteractive keyboard-configuration
   
 echo "Pacific/Auckland" > /etc/timezone
 dpkg-reconfigure -f noninteractive tzdata
