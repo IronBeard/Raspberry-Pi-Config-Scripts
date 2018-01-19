@@ -1,5 +1,16 @@
 #!/bin/bash
 
+#DESCRIPTION
+#    .
+#NOTES
+#    File Name      : InstallAirPi.sh
+#    Author         : Gareth Philpott
+#    Date           : 09/01/2017
+#    Prerequisite   : 
+#    Copyright 2017 - Gareth Philpott
+#EXAMPLE
+#    ./InstallAirPi.sh
+
 #Functions
 function ScreenLines {
   printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
