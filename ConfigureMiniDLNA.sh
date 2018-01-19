@@ -1,5 +1,16 @@
 #!/bin/bash
 
+#DESCRIPTION
+#    .
+#NOTES
+#    File Name      : ConfigureMiniDLNA.sh
+#    Author         : Gareth Philpott
+#    Date           : 09/01/2017
+#    Prerequisite   : MiniDLNA
+#    Copyright 2017 - Gareth Philpott
+#EXAMPLE
+#    ./ConfigureMiniDLNA.sh
+
 #Functions
 function ScreenLines {
   printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
@@ -27,6 +38,15 @@ BOLD='\033[1m'
 UNDERLINE='\033[4m'
 
 echo -e ${WHITE}`date`$(tput sgr0)
+
+echo -e ${WHITE}"Checking for prerequisites"$(tput sgr0)
+packages="minidlna"
+
+for package in $packages; do
+    dpkg -s "$package" >/dev/null 2>&1 || {
+		apt-get -y install minidlna
+}
+done
 
 #Ensure that the script has been run as root
 if [ `whoami` != root ]; then

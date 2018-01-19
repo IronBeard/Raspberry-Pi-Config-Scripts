@@ -39,6 +39,15 @@ UNDERLINE='\033[4m'
 
 echo -e ${WHITE}`date`$(tput sgr0)
 
+echo -e ${WHITE}"Checking for prerequisites"$(tput sgr0)
+packages="minidlna"
+
+for package in $packages; do
+    dpkg -s "$package" >/dev/null 2>&1 || {
+		apt-get -y install minidlna
+}
+done
+
 echo -e ${WHITE}"Backup ${PURPLE}MiniDLNA ${WHITE} config for rollback"$(tput sgr0)
 cp /etc/minidlna.conf /etc/minidlna.conf.bak
 
