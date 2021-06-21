@@ -325,7 +325,7 @@ def SendToWebServer():
       </olm:SendToDB> \
    </soapenv:Body> \
 </soapenv:Envelope>\" \
-http://nemesis.olympus.home/BGInfo4Pi/BGInfo4Pi.svc"
+http://web-bginfo.olympus.home/BGInfo4Pi/BGInfo4Pi.svc"
       if boolDebug == 1:
         print "URL: " + url
         print
